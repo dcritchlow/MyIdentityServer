@@ -8,6 +8,9 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 using System;
+using IdentityServer.Data.Seed;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace IdentityServer
 {
@@ -28,13 +31,26 @@ namespace IdentityServer
                 //    rollOnFileSizeLimit: true,
                 //    shared: true,
                 //    flushToDiskInterval: TimeSpan.FromSeconds(1))
+                .WriteTo.File(@"identityserver4_log.txt")
                 .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level}] {SourceContext}{NewLine}{Message:lj}{NewLine}{Exception}{NewLine}", theme: AnsiConsoleTheme.Literate)
                 .CreateLogger();
 
             try
             {
                 Log.Information("Starting host...");
-                CreateHostBuilder(args).Build().Run();
+                Console.Title = "IdentityServer4";
+
+                var host = CreateHostBuilder(args).Build();
+
+                var config = host.Services.GetRequiredService<IConfiguration>();
+                bool seed = config.GetSection("Data").GetValue<bool>("Seed");
+                if (seed)
+                {
+                    var connectionString = config.GetConnectionString("DefaultConnection");
+                    Users.EnsureSeedData(connectionString);
+                }
+
+                host.Run();
                 return 0;
             }
             catch (Exception ex)

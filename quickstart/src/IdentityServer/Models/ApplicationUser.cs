@@ -4,6 +4,9 @@ namespace IdentityServer.Models
 {
 	public class ApplicationUser : IdentityUser
 	{
-	
+        public ApplicationUser()
+        {
+
+        }
 	}
 }
